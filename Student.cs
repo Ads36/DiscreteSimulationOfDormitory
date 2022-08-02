@@ -9,6 +9,11 @@ namespace DiscreteSimulationOfDormitory
 		public int Number { get; }
 		private static int currentNumber = 1;
 		public int HomeFloor;
+		public int TimeInGym = 2700;
+		public int TimeInMusicRoom = 3600;
+		public int TimeInStudyRoom = 5400;
+		public int TimeInWashingMachinesRoom = 1800;
+
 		public Place CurrentPlace;
 		public enum Place
         {
@@ -18,7 +23,7 @@ namespace DiscreteSimulationOfDormitory
 			InElevator,
 			InGym,
 			InStudyRoom,
-			WaitingInQueue,
+			WaitingInQueue
         }
 		public Student()
         {
