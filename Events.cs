@@ -6,12 +6,12 @@ namespace DiscreteSimulationOfDormitory
 	{
         public int Time { get; }
 		protected abstract int PrimaryPriority { get; }
-		protected int SecondaryPriority { get; set; }
+
 		public Event(int time, int secondaryPriority = 1)
         {
 			Time = time;
 			//PrimaryPriority = primaryPriority;
-			SecondaryPriority = secondaryPriority;
+
         }
 		public int CompareTo(Event other)
         {
@@ -19,11 +19,7 @@ namespace DiscreteSimulationOfDormitory
 				return Time.CompareTo(other.Time);
 			if (PrimaryPriority.CompareTo(other.PrimaryPriority) == 0)
             {
-                if (SecondaryPriority.CompareTo(other.SecondaryPriority) == 0)
-                {
-					return 1;
-                }
-				return SecondaryPriority.CompareTo(other.SecondaryPriority);
+				return 1;
             }
 			return PrimaryPriority.CompareTo(other.PrimaryPriority);
 		}
@@ -56,7 +52,65 @@ namespace DiscreteSimulationOfDormitory
 		protected override int PrimaryPriority => 2;
         protected override void Action(Dormitory dorm)
         {
-            
+			dorm.ChangePorters(Time);
         }
     }
+	public abstract class BorrowingAndReturningThings : Event
+    {
+		protected enum ThingsToBorrow
+        {
+			GymKeys,
+			WashingMachineKeys,
+			StudyRoomKeys,
+			VacuumCleaner,
+			MusicRoomKeys
+        }
+		protected abstract int SecondaryPriority { get;}
+		public BorrowingAndReturningThings(int time, Student who, int priority = 1) : base(time)
+        {
+			//SecondaryPriority = priority;
+		}
+		public int CompareTo(BorrowingAndReturningThings other)
+        {
+			if (Time.CompareTo(other.Time) != 0)
+				return Time.CompareTo(other.Time);
+			if (PrimaryPriority.CompareTo(other.PrimaryPriority) == 0)
+			{
+				if (SecondaryPriority.CompareTo(other.SecondaryPriority) == 0)
+				{
+					return 1;
+				}
+				return SecondaryPriority.CompareTo(other.SecondaryPriority);
+			}
+			return PrimaryPriority.CompareTo(other.PrimaryPriority);
+		}
+		protected override int PrimaryPriority => 3;
+		
+    }
+	class BorrowingGymKeys : BorrowingAndReturningThings
+    {
+		private Student student;
+		public BorrowingGymKeys(int time, Student who, int priority) : base(time, who, priority)
+        {
+			student = who;
+        }
+		protected override int SecondaryPriority => 1;
+		protected override void Action(Dormitory dorm)
+        {
+			dorm.BorrowingGymKeys(Time, student);
+        }
+    }
+	class ReturningGymKeys : BorrowingAndReturningThings
+	{
+		private Student student;
+		public ReturningGymKeys(int time, Student who, int priority) : base(time, who, priority)
+		{
+			student = who;
+		}
+		protected override int SecondaryPriority => 1;
+		protected override void Action(Dormitory dorm)
+		{
+			dorm.ReturningGymKeys(Time, student);
+		}
+	}
 }
