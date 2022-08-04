@@ -30,7 +30,39 @@ namespace DiscreteSimulationOfDormitory
         }
 	}
 	//events: opening/closing, changeofvratny, borrowing keys - gym, music room, washing machines, elevators, gym, study rooms, entering and leaving
+	class ElevatorMoving : Event
+    {
+		private Elevator el;
+		public ElevatorMoving(int time, Elevator elev) : base(time)
+		{
+			el = elev;
+		}
+		protected override int PrimaryPriority => 5;
+		protected override void Action(Dormitory dorm)
+		{
+			if (el.CurrentState == Elevator.State.Stop)
+			{ 
+				el.DecidingDirectionAfterGettingOff(dorm, Time);
+				el.MoveUp();
+            }
+		}
+	}
+	class ElevatorMovingDown : Event
+	{
+		private Elevator el;
+		public ElevatorMovingDown(int time, Elevator elev) : base(time)
+		{
+			el = elev;
+		}
+		protected override int PrimaryPriority => 5;
+		protected override void Action(Dormitory dorm)
+		{
+			if (el.CurrentState == Elevator.State.Stop)
+			{
 
+			}
+		}
+	}
 	class OpeningDorms : Event
     {
 		public OpeningDorms(int time) : base(time)
@@ -53,6 +85,43 @@ namespace DiscreteSimulationOfDormitory
         protected override void Action(Dormitory dorm)
         {
 			dorm.ChangePorters(Time);
+        }
+    }
+	class AddToQueue : Event
+    {
+		private Student student;
+		public AddToQueue(int time, Student stud) : base(time)
+		{
+			student = stud;
+		}
+		protected override int PrimaryPriority => 4;
+		protected override void Action(Dormitory dorm)
+		{
+			dorm.AddToPorterQueue(Time, student);
+		}
+	}
+	class LeavingRoom : Event
+    {
+		public LeavingRoom(int time, Student stud) : base(time)
+        {
+
+        }
+		protected override int PrimaryPriority => 4;
+        protected override void Action(Dormitory dorm)
+        {
+            //dorm.
+        }
+    }
+	class NextWaiterInQueue : Event
+    {
+		public NextWaiterInQueue(int time) : base(time)
+        {
+
+        }
+		protected override int PrimaryPriority => 3;
+        protected override void Action(Dormitory dorm)
+        {
+			dorm.RemoveFromQueue(Time);
         }
     }
 	public abstract class BorrowingAndReturningThings : Event
@@ -90,7 +159,7 @@ namespace DiscreteSimulationOfDormitory
 	class BorrowingGymKeys : BorrowingAndReturningThings
     {
 		private Student student;
-		public BorrowingGymKeys(int time, Student who, int priority) : base(time, who, priority)
+		public BorrowingGymKeys(int time, Student who) : base(time, who)
         {
 			student = who;
         }
@@ -103,7 +172,7 @@ namespace DiscreteSimulationOfDormitory
 	class ReturningGymKeys : BorrowingAndReturningThings
 	{
 		private Student student;
-		public ReturningGymKeys(int time, Student who, int priority) : base(time, who, priority)
+		public ReturningGymKeys(int time, Student who) : base(time, who)
 		{
 			student = who;
 		}

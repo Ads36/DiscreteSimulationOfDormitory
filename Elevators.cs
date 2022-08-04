@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 namespace DiscreteSimulationOfDormitory
 {
-    public class Prevoznik
+    public class Prevoznik : Student
     {
         public int DestinationFloor;
         public Student Prevazejici;
@@ -11,13 +11,18 @@ namespace DiscreteSimulationOfDormitory
             DestinationFloor = floor;
             Prevazejici = stud;
         }
+        public Student ReturnStudent()
+        {
+            return Prevazejici;
+        }
     }
     public class Elevator
     {
-        public static List<Queue<Prevoznik>> ElevatorQueues = new();
+        public List<Queue<Prevoznik>> ElevatorQueues = new();
         public int CurrentFloor;
         public int Capacity;
         public int SpeedBetweenFloors;
+        public int Number;
         public class Comp : IComparer<int>
         {
             Elevator ele;
@@ -38,7 +43,7 @@ namespace DiscreteSimulationOfDormitory
         public SortedSet<int> FloorsToStop;
         public List<Prevoznik> StudentsIn;
 
-        public Elevator(int capacity, int floor, int maxFloor)
+        public Elevator(int capacity, int floor, int maxFloor, Dormitory dorm)
         {
             Capacity = capacity;
             CurrentFloor = floor;
@@ -88,9 +93,11 @@ namespace DiscreteSimulationOfDormitory
         {
             StudentsIn.Remove(stud);
             FloorsToStop.Remove(CurrentFloor);
+            Student student = stud.ReturnStudent();
             stud.Prevazejici.NextPlace();
+            student.CurrentPlace = Student.Place.InRoom;
         }
-        public void WhoGetsOff()
+        public void WhoGetsOff(Dormitory dorm, int time)
         {
             foreach (var stud in StudentsIn)
             {
@@ -99,8 +106,8 @@ namespace DiscreteSimulationOfDormitory
                     GetOffElevator(stud);
                 }
             }
-            GetNewPassanger();
-            DecidingDirectionAfterGettingOff();
+            GetNewPassanger(dorm);
+            DecidingDirectionAfterGettingOff(dorm, time);
         }
         public bool DoesSomeoneGetOff()
         {
@@ -113,7 +120,7 @@ namespace DiscreteSimulationOfDormitory
             }
             return false;
         }
-        public void DecidingDirectionAfterGettingOff()
+        public void DecidingDirectionAfterGettingOff(Dormitory dorm, int time)
         {
             if (StudentsIn.Count == 0)
             {
@@ -121,11 +128,11 @@ namespace DiscreteSimulationOfDormitory
                 {
                     if (FloorsToStop.Max > CurrentFloor)
                     {
-                        MoveUp();
+                        //dorm.ScheduleEvent(new ElevatorMovingUp(time + 10, this));
                     }
                     else if (FloorsToStop.Min < CurrentFloor)
                     {
-                        MoveDown();
+                        dorm.ScheduleEvent(new ElevatorMovingDown(time + 10, this));
                     }
                 }
                 else
@@ -137,19 +144,29 @@ namespace DiscreteSimulationOfDormitory
             {
                 if (CurrentState == State.Up && FloorsToStop.Max > CurrentFloor)
                 {
-                    MoveUp();
+                    //dorm.ScheduleEvent(new ElevatorMovingUp(time + 10, this));
                 }
                 if (CurrentState == State.Down && FloorsToStop.Min < CurrentFloor)
                 {
-                    MoveDown();
+                    dorm.ScheduleEvent(new ElevatorMovingDown(time + 10, this));
                 }
             }
         }
-        public void ContinueInDirection()
+        public void DirectionsFromStop(Dormitory dorm, int time)
+        {
+            if (ElevatorQueues[this.Number].Count > 0)
+            {
+                if (true)
+                {
+
+                }
+            }
+        }
+        public void ContinueInDirection(Dormitory dorm, int time)
         {
             if (DoesSomeoneGetOff())
             {
-                WhoGetsOff();
+                WhoGetsOff(dorm, time);
             }
             else
             {
@@ -163,7 +180,7 @@ namespace DiscreteSimulationOfDormitory
                 }
             }
         }
-        public void GetNewPassanger()
+        public void GetNewPassanger(Dormitory dorm)
         {
             if (ElevatorQueues[CurrentFloor].Count > 0)
             {
