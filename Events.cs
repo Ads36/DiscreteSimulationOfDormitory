@@ -30,20 +30,30 @@ namespace DiscreteSimulationOfDormitory
         }
 	}
 	//events: opening/closing, changeofvratny, borrowing keys - gym, music room, washing machines, elevators, gym, study rooms, entering and leaving
-	class ElevatorMoving : Event
+	class ElevatorMovingUp : Event
     {
 		private Elevator el;
-		public ElevatorMoving(int time, Elevator elev) : base(time)
+		public ElevatorMovingUp(int time, Elevator elev) : base(time)
 		{
 			el = elev;
 		}
 		protected override int PrimaryPriority => 5;
 		protected override void Action(Dormitory dorm)
 		{
-			if (el.CurrentState == Elevator.State.Stop)
-			{ 
-				el.DecidingDirectionAfterGettingOff(dorm, Time);
-				el.MoveUp();
+			el.WhoGetsOff(dorm, Time);
+			el.GetNewPassanger(dorm);
+			el.MoveUp();
+			if (el.CurrentFloor < el.FloorsToStop.Max)
+            {
+				dorm.ScheduleEvent(new ElevatorMovingUp(Time, el));
+            }
+            else if (el.CurrentFloor == el.FloorsToStop.Max)
+            {
+				dorm.ScheduleEvent(new ElevatorMovingDown(Time, el));
+            }
+            else
+            {
+				dorm.ScheduleEvent(new ElevatorMovingDown(Time, el));
             }
 		}
 	}
@@ -57,10 +67,42 @@ namespace DiscreteSimulationOfDormitory
 		protected override int PrimaryPriority => 5;
 		protected override void Action(Dormitory dorm)
 		{
-			if (el.CurrentState == Elevator.State.Stop)
+			el.WhoGetsOff(dorm, Time);
+			el.GetNewPassanger(dorm);
+			el.MoveDown();
+			if (el.CurrentFloor > el.FloorsToStop.Min)
 			{
-
+				dorm.ScheduleEvent(new ElevatorMovingDown(Time, el));
 			}
+			else if (el.CurrentFloor == el.FloorsToStop.Min)
+			{
+				dorm.ScheduleEvent(new ElevatorMovingUp(Time, el));
+			}
+			else
+			{
+				dorm.ScheduleEvent(new ElevatorMovingUp(Time, el));
+			}
+		}
+	}
+	class PressingButtonOfElevator : Event
+    {
+		private Elevator el;
+		public PressingButtonOfElevator(int time, Elevator elev) : base(time)
+		{
+			el = elev;
+			
+		}
+		protected override int PrimaryPriority => 6;
+		protected override void Action(Dormitory dorm)
+		{
+            if (el.CurrentFloor < el.FloorsToStop.Max && el.CurrentState == Elevator.State.Stop)
+            {
+				dorm.ScheduleEvent(new ElevatorMovingUp(Time, el));
+			}
+            else if (el.CurrentFloor > el.FloorsToStop.Min && el.CurrentState == Elevator.State.Stop)
+            {
+				dorm.ScheduleEvent(new ElevatorMovingDown(Time, el));
+            }
 		}
 	}
 	class OpeningDorms : Event
@@ -112,6 +154,32 @@ namespace DiscreteSimulationOfDormitory
             //dorm.
         }
     }
+	class ComingInDormitory : Event
+    {
+		private Student student;
+		public ComingInDormitory(int time, Student stud) : base(time)
+		{
+			student = stud;
+		}
+		protected override int PrimaryPriority => 4;
+		protected override void Action(Dormitory dorm)
+		{
+			//dorm.
+		}
+	}
+	class LeavingDormitory : Event
+    {
+		private Student student;
+		public LeavingDormitory(int time, Student stud) : base(time)
+		{
+			student = stud;
+		}
+		protected override int PrimaryPriority => 4;
+		protected override void Action(Dormitory dorm)
+		{
+			dorm.LeavingDormitory(student, Time);
+		}
+	}
 	class NextWaiterInQueue : Event
     {
 		public NextWaiterInQueue(int time) : base(time)

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 namespace DiscreteSimulationOfDormitory
 {
-    public class Prevoznik : Student
+    public class Prevoznik
     {
         public int DestinationFloor;
         public Student Prevazejici;
@@ -92,22 +92,45 @@ namespace DiscreteSimulationOfDormitory
         public void GetOffElevator(Prevoznik stud)
         {
             StudentsIn.Remove(stud);
-            FloorsToStop.Remove(CurrentFloor);
+            
             Student student = stud.ReturnStudent();
             stud.Prevazejici.NextPlace();
             student.CurrentPlace = Student.Place.InRoom;
         }
         public void WhoGetsOff(Dormitory dorm, int time)
         {
-            foreach (var stud in StudentsIn)
+            if (DoesSomeoneGetOff())
             {
-                if (stud.DestinationFloor == CurrentFloor)
+                foreach (var stud in StudentsIn)
                 {
-                    GetOffElevator(stud);
+                    if (stud.DestinationFloor == CurrentFloor)
+                    {
+                        GetOffElevator(stud);
+                    }
                 }
+                FloorsToStop.Remove(CurrentFloor);
             }
-            GetNewPassanger(dorm);
-            DecidingDirectionAfterGettingOff(dorm, time);
+            //GetNewPassanger(dorm);
+            //DecidingDirectionAfterGettingOff(dorm, time);
+        }
+        public State WhereToMove()
+        {
+            if (FloorsToStop.Count > 0)
+            {
+                if (CurrentFloor < FloorsToStop.Max)
+                {
+                    return State.Up;
+                }
+                else if (CurrentFloor > FloorsToStop.Min)
+                {
+                    return State.Down;
+                }
+                return State.Stop;
+            }
+            else
+            {
+                return State.Stop;
+            }
         }
         public bool DoesSomeoneGetOff()
         {
