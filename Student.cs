@@ -13,6 +13,7 @@ namespace DiscreteSimulationOfDormitory
 		public int TimeInMusicRoom { get; private set; } = 3600;
 		public int TimeInStudyRoom { get; private set; } = 5400;
 		public int TimeInWashingMachinesRoom { get; private set; } = 1800;
+		public int TimeOut { get; private set; } = 3600;
 		public int CurrentFloor;
 		public Place CurrentPlace;
 		public enum Place

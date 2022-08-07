@@ -80,22 +80,28 @@ namespace DiscreteSimulationOfDormitory
                 Students.Add(stud);
             }
         }
-        public void AddToElevatorQueue(Student stud, int destination, int currentFloor, int whichElev) 
+        public void AddToElevatorQueue(Student stud, int destination, int currentFloor, int whichElev, int time) 
         {
             Prevoznik prevoz = new Prevoznik(stud, destination);
             Elevators[whichElev].ElevatorQueues[currentFloor].Enqueue(prevoz);
+            Elevators[whichElev].FloorsToStop.Add(destination);
+            if (Elevators[whichElev].ElevatorQueues[currentFloor].Count == 1)
+            {
+                ScheduleEvent(new PressingButtonOfElevator(time, Elevators[whichElev]));
+            }
+            
         }
         public void GetOffElevator(Prevoznik stud)
         {
 
         }
-        public void StudentWantsSmt(Student stud)
+        public void StudentWantsSmt(Student stud, int time)
         {
             if (stud.CurrentPlace == Student.Place.InRoom)
             {
                 int whichElevator = random.Next(0, NumberOfElevators);
                 //Prevoznik prevoz = new Prevoznik(stud, 0);
-                AddToElevatorQueue(stud, 0, stud.HomeFloor, whichElevator);
+                AddToElevatorQueue(stud, 0, stud.HomeFloor, whichElevator, time);
             }
             else if (stud.CurrentPlace == Student.Place.Outside)
             {
@@ -105,6 +111,11 @@ namespace DiscreteSimulationOfDormitory
             {
                 //do nothing, student is doing something and can't do 2 things at the same time
             }
+        }
+        public void LeavingDormitory(Student stud, int time)
+        {
+            Console.WriteLine($"<{ConvertToTime(time)}> Student {stud.Number} is leaving dormitory");
+            ScheduleEvent(new ComingInDormitory(time + stud.TimeOut, stud));
         }
         public void Open(int time)
         {
@@ -168,7 +179,7 @@ namespace DiscreteSimulationOfDormitory
                 default:
                     break;
             }
-            AddToElevatorQueue(stud, stud.HomeFloor, 0, random.Next(0, NumberOfElevators));
+            AddToElevatorQueue(stud, stud.HomeFloor, 0, random.Next(0, NumberOfElevators), time);
             if (PorterQueue.Count>0)
             {
                 ScheduleEvent(new NextWaiterInQueue(time + PorterServingTime));
