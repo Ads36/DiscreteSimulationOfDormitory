@@ -26,11 +26,20 @@ namespace DiscreteSimulationOfDormitory
 			InStudyRoom,
 			WaitingInQueue
 		}
-		public Student()
+		public Student(Dormitory dorm)
 		{
-
-			HomeFloor = random.Next(1, +1);
+			HomeFloor = random.Next(1, dorm.NumberOfFloors);
 			Number = currentNumber++;
+			int rand = random.Next(0, 100);
+            if (rand > 50)
+            {
+				CurrentPlace = Place.InRoom;
+            }
+			else
+            {
+				CurrentPlace = Place.Outside;
+            }
+			pozadavek = WhatHeWants.GymKeys;
 		}
 		public Place GetCurrentPlace()
 		{
@@ -52,7 +61,17 @@ namespace DiscreteSimulationOfDormitory
 			MusicRoomKeys,
 			ReturningMusicRoomKeys,
 			StudyRoomKeys,
-			ReturningStudyRoomKeys
+			ReturningStudyRoomKeys, 
+			Nothing
 		}
+		public bool IsReadyToGoQueue()
+        {
+            if (CurrentPlace == Place.InRoom || CurrentPlace == Place.Outside)
+            {
+				return true;
+			}
+			return false;
+			
+        }
 	}
 }

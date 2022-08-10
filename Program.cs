@@ -3,6 +3,33 @@ using System.Collections.Generic;
 using CodEx;
 namespace DiscreteSimulationOfDormitory
 {
+    public class Calendar
+    {
+        public Dormitory dormitory;
+        public Calendar(Dormitory dorm){
+            dormitory = dorm;
+        }
+        public SortedSet<Event> calendar = new();
+        public void ScheduleEvent(Event e)
+        {
+            calendar.Add(e);
+        }
+        public void Run()
+        {
+            //InitializeElevators();
+            while (calendar.Count > 0)
+            {
+                Event currentEvent = calendar.Min;
+                calendar.Remove(calendar.Min);
+                currentEvent.Invoke(dormitory);
+                if (currentEvent.Time > dormitory.MaxTime)
+                {
+                    Console.WriteLine("Time exceeded, end of simulation");
+                    break;
+                }
+            }
+        }
+    }
 
     public class Dormitory
     {
@@ -10,7 +37,7 @@ namespace DiscreteSimulationOfDormitory
         public List<Elevator> Elevators = new();
 
         public Queue<Student> PorterQueue = new();
-        public SortedSet<Event> calendar = new();
+        public Calendar calendar;
         public List<Student> StudentsInGym = new();
         public List<Student> StudentsInStudyRoom = new();
         public List<Student> StudentsInMusicRoom = new();
@@ -19,8 +46,9 @@ namespace DiscreteSimulationOfDormitory
         public List<string> PorterNames = new();
         public int CurrentPorterIndex;
         public int NumberOfStudents;
-        public int MaxTime;
+        public int MaxTime = 24 * 3600 * 1 / 8;
         public int PorterServingTime = 30;
+        public int PorterTime = 8 * 3600;
         public int NumberOfFloors { get;}
         public int NumberOfElevators;
         public int NumberOfPorters;
@@ -29,39 +57,39 @@ namespace DiscreteSimulationOfDormitory
         public string ConvertToTime(int time)
         {
             TimeSpan TimeConverter = TimeSpan.FromSeconds(time);
-            return TimeConverter.ToString(@"hh\:mm\:ss\:fff");
+            return TimeConverter.ToString(@"dd\:hh\:mm\:ss");
         }
-        public void ScheduleEvent(Event e)
-        {
-            calendar.Add(e);
-        }
-        public void Run()
-        {
-            InitializeElevators();
-            while(calendar.Count > 0)
-            {
-                Event currentEvent = calendar.Min;
-                calendar.Remove(currentEvent);
-                currentEvent.Invoke(this);
-                if (currentEvent.Time > MaxTime)
-                {
-                    Console.WriteLine("Time exceeded, end of simulation");
-                    break;
-                }
-            }
-        }
+
+
         public Dormitory(int numberOfFloors, int numberOfPorters, int numberOfStudents, int numberOfElevators, int maxTime, int elevatorCapacity)
         {
-            NumberOfFloors = 20;
-            NumberOfPorters = 5;
-            NumberOfStudents = 1000;
-            NumberOfElevators = 4;
-            MaxTime = 3 * 24 * 60;
-            ElevatorCapacity = 4;
-            for (int i = 0; i < numberOfPorters; i++)
+            NumberOfFloors = numberOfFloors;
+            NumberOfPorters = numberOfPorters;
+            NumberOfStudents = numberOfStudents;
+            NumberOfElevators = numberOfElevators;
+            calendar = new Calendar(this);
+            //MaxTime = 3 * 24 * 60;
+            ElevatorCapacity = elevatorCapacity;
+            for (int i = 0; i < NumberOfPorters; i++)
             {
                 PorterNames.Add($"{(char)(i+65)}");
             }
+            
+        }
+        public void Inititalize()
+        {
+            InitializeElevators();
+            InitializeStudents();
+
+            calendar.ScheduleEvent(new OpeningDorms(0));
+            //ScheduleEvent(new )MaxTime/PorterTime
+            for (int i = 1; i < 5 - 1; i++)
+            {
+                calendar.ScheduleEvent(new ChangingPorters(i * PorterTime));
+            }
+        }
+        public void ScheduleEvent(Event even) {
+            calendar.ScheduleEvent(even);
         }
         public void InitializeElevators()
         {
@@ -69,15 +97,18 @@ namespace DiscreteSimulationOfDormitory
             {
                 Elevator elevator = new Elevator(ElevatorCapacity, 0, NumberOfFloors, this);
                 elevator.Number = i;
+                elevator.CurrentState = Elevator.State.Stop;
                 Elevators.Add(elevator);
+                
             }
         }
         public void InitializeStudents()
         {
             for (int i = 0; i < NumberOfStudents; i++)
             {
-                Student stud = new Student();
+                Student stud = new Student(this);
                 Students.Add(stud);
+                calendar.ScheduleEvent(new StudentWantsSomething(i * 10, stud));
             }
         }
         public void AddToElevatorQueue(Student stud, int destination, int currentFloor, int whichElev, int time) 
@@ -85,15 +116,9 @@ namespace DiscreteSimulationOfDormitory
             Prevoznik prevoz = new Prevoznik(stud, destination);
             Elevators[whichElev].ElevatorQueues[currentFloor].Enqueue(prevoz);
             Elevators[whichElev].FloorsToStop.Add(destination);
-            if (Elevators[whichElev].ElevatorQueues[currentFloor].Count == 1)
-            {
-                ScheduleEvent(new PressingButtonOfElevator(time, Elevators[whichElev]));
-            }
-            
-        }
-        public void GetOffElevator(Prevoznik stud)
-        {
-
+            Elevators[whichElev].FloorsToStop.Add(currentFloor);
+            Console.WriteLine($"<{ConvertToTime(time)}> Student {stud.Number} is pressing elevator {Elevators[whichElev].Number} button at floor {currentFloor} heading to floor {destination}");
+            calendar.ScheduleEvent(new PressingButtonOfElevator(time, Elevators[whichElev]));
         }
         public void StudentWantsSmt(Student stud, int time)
         {
@@ -105,17 +130,39 @@ namespace DiscreteSimulationOfDormitory
             }
             else if (stud.CurrentPlace == Student.Place.Outside)
             {
+                calendar.ScheduleEvent(new ComingInDormitory(time, stud));
                 PorterQueue.Enqueue(stud);
+                stud.CurrentPlace = Student.Place.WaitingInQueue;
             }
             else
             {
                 //do nothing, student is doing something and can't do 2 things at the same time
             }
         }
+        public void ArrivingToFirstFloor(Student stud, int time)
+        {
+            if (stud.pozadavek == Student.WhatHeWants.Nothing)
+            {
+                calendar.ScheduleEvent(new LeavingDormitory(time, stud));
+            }
+            else
+            {
+                calendar.ScheduleEvent(new AddToQueue(time, stud));
+            }
+        }
+        public void EnteringDormitory(Student stud, int time)
+        {
+            if (stud.CurrentPlace == Student.Place.Outside)
+            {
+                Console.WriteLine($"<{ConvertToTime(time)}> Student {stud.Number} is entering dormitory");
+                stud.CurrentPlace = Student.Place.WaitingForElevator;
+            }
+        }
         public void LeavingDormitory(Student stud, int time)
         {
             Console.WriteLine($"<{ConvertToTime(time)}> Student {stud.Number} is leaving dormitory");
-            ScheduleEvent(new ComingInDormitory(time + stud.TimeOut, stud));
+            stud.CurrentPlace = Student.Place.Outside;
+            calendar.ScheduleEvent(new ComingInDormitory(time + stud.TimeOut, stud));
         }
         public void Open(int time)
         {
@@ -139,7 +186,7 @@ namespace DiscreteSimulationOfDormitory
         public void BorrowingGymKeys(int time, Student who)
         {
             StudentsInGym.Add(who);
-            ScheduleEvent(new AddToQueue(time + who.TimeInGym, who));
+            calendar.ScheduleEvent(new AddToQueue(time + who.TimeInGym, who));
             who.pozadavek = Student.WhatHeWants.ReturningGymKeys;
             Console.WriteLine($"<{ConvertToTime(time)}> Student {who.Number} borrows keys from the gym");
         }
@@ -149,7 +196,7 @@ namespace DiscreteSimulationOfDormitory
             Console.WriteLine($"<{ConvertToTime(time)}> Student {who.Number} enters the queue");
             if (PorterQueue.Count == 1)
             {
-                ScheduleEvent(new NextWaiterInQueue(time + PorterServingTime));
+                calendar.ScheduleEvent(new NextWaiterInQueue(time + PorterServingTime));
             }
             //ScheduleEvent(new NextWaiterInQueue(time + (PorterQueue.Count - 1) * PorterServingTime));
         }
@@ -182,7 +229,7 @@ namespace DiscreteSimulationOfDormitory
             AddToElevatorQueue(stud, stud.HomeFloor, 0, random.Next(0, NumberOfElevators), time);
             if (PorterQueue.Count>0)
             {
-                ScheduleEvent(new NextWaiterInQueue(time + PorterServingTime));
+                calendar.ScheduleEvent(new NextWaiterInQueue(time + PorterServingTime));
             }
         }
         
@@ -192,13 +239,15 @@ namespace DiscreteSimulationOfDormitory
 
         static void Main(string[] args)
         {
-            Dormitory dorm = new Dormitory(1,5,1,1,1,1);
-            
+            Dormitory dorm = new Dormitory(20,5,20,1,50,5);
+            dorm.Inititalize();
+            //dorm.PorterNames.Add("Adam");
+            //dorm.PorterNames.Add("Milan");
             Console.WriteLine("Hello World!");
-            Student Adam = new Student();
+            Student Adam = new Student(dorm);
             Adam.CurrentPlace = Student.Place.InGym;
             Console.WriteLine(Adam.GetCurrentPlace());
-            dorm.Run();
+            dorm.calendar.Run();
             /*for (int i = 0; i < 20; i++)
             {
                 Student asas = new Student();

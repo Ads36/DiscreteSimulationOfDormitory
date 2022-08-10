@@ -21,27 +21,12 @@ namespace DiscreteSimulationOfDormitory
         public List<Queue<Prevoznik>> ElevatorQueues = new();
         public int CurrentFloor;
         public int Capacity;
-        public int SpeedBetweenFloors;
+        public int SpeedBetweenFloors = 10;
         public int Number;
-        public class Comp : IComparer<int>
-        {
-            Elevator ele;
-            public Comp(Elevator el)
-            {
-                ele = el;
-            }
-            public int Compare(int a, int b)
-            {
-                return 1;
-                if (ele.CurrentState==State.Up)
-                {
 
-                }
-            }
-        }
 
-        public SortedSet<int> FloorsToStop;
-        public List<Prevoznik> StudentsIn;
+        public SortedSet<int> FloorsToStop = new();
+        public List<Prevoznik> StudentsIn = new();
 
         public Elevator(int capacity, int floor, int maxFloor, Dormitory dorm)
         {
@@ -52,7 +37,8 @@ namespace DiscreteSimulationOfDormitory
             {
                 ElevatorQueues.Add(queue);
             }
-            //FloorsToStop.Comparer = 
+            //CurrentState = State.Stop;
+            
         }
         public enum State
         {
@@ -65,11 +51,13 @@ namespace DiscreteSimulationOfDormitory
         {
             CurrentState = State.Down;
             CurrentFloor--;
+            Console.WriteLine($"Jedu dolu a jsem v {CurrentFloor}");
         }
         public void MoveUp()
         {
             CurrentState = State.Up;
             CurrentFloor++;
+            Console.WriteLine($"Jedu nahoru a jsem v {CurrentFloor}");
         }
         public void Stop()
         {
@@ -89,23 +77,31 @@ namespace DiscreteSimulationOfDormitory
                 FloorsToStop.Add(stud.DestinationFloor);
             }
         }
-        public void GetOffElevator(Prevoznik stud)
+        public void GetOffElevator(Prevoznik stud, Dormitory dorm, int time)
         {
             StudentsIn.Remove(stud);
             
             Student student = stud.ReturnStudent();
-            stud.Prevazejici.NextPlace();
-            student.CurrentPlace = Student.Place.InRoom;
+            //stud.Prevazejici.NextPlace();
+            if (CurrentFloor == student.HomeFloor)
+            {
+                student.CurrentPlace = Student.Place.InRoom;
+            }
+            if (CurrentFloor == 0)
+            {
+                dorm.ArrivingToFirstFloor(student, time);
+            }
+            
         }
         public void WhoGetsOff(Dormitory dorm, int time)
         {
             if (DoesSomeoneGetOff())
             {
-                foreach (var stud in StudentsIn)
+                for (int i = 0; i <StudentsIn.Count; i++)
                 {
-                    if (stud.DestinationFloor == CurrentFloor)
+                    if (StudentsIn[i].DestinationFloor == CurrentFloor)
                     {
-                        GetOffElevator(stud);
+                        GetOffElevator(StudentsIn[i], dorm, time);
                     }
                 }
                 FloorsToStop.Remove(CurrentFloor);
@@ -132,6 +128,14 @@ namespace DiscreteSimulationOfDormitory
                 return State.Stop;
             }
         }
+        public bool IsFull()
+        {
+            if (StudentsIn.Count == Capacity)
+            {
+                return true;
+            }
+            return false;
+        }
         public bool DoesSomeoneGetOff()
         {
             foreach (var stud in StudentsIn)
@@ -142,66 +146,6 @@ namespace DiscreteSimulationOfDormitory
                 }
             }
             return false;
-        }
-        public void DecidingDirectionAfterGettingOff(Dormitory dorm, int time)
-        {
-            if (StudentsIn.Count == 0)
-            {
-                if (FloorsToStop.Count > 0)
-                {
-                    if (FloorsToStop.Max > CurrentFloor)
-                    {
-                        //dorm.ScheduleEvent(new ElevatorMovingUp(time + 10, this));
-                    }
-                    else if (FloorsToStop.Min < CurrentFloor)
-                    {
-                        dorm.ScheduleEvent(new ElevatorMovingDown(time + 10, this));
-                    }
-                }
-                else
-                {
-                    Stop();
-                }
-            }
-            else
-            {
-                if (CurrentState == State.Up && FloorsToStop.Max > CurrentFloor)
-                {
-                    //dorm.ScheduleEvent(new ElevatorMovingUp(time + 10, this));
-                }
-                if (CurrentState == State.Down && FloorsToStop.Min < CurrentFloor)
-                {
-                    dorm.ScheduleEvent(new ElevatorMovingDown(time + 10, this));
-                }
-            }
-        }
-        public void DirectionsFromStop(Dormitory dorm, int time)
-        {
-            if (ElevatorQueues[this.Number].Count > 0)
-            {
-                if (true)
-                {
-
-                }
-            }
-        }
-        public void ContinueInDirection(Dormitory dorm, int time)
-        {
-            if (DoesSomeoneGetOff())
-            {
-                WhoGetsOff(dorm, time);
-            }
-            else
-            {
-                if (CurrentState == State.Down)
-                {
-                    MoveDown();
-                }
-                if (CurrentState == State.Up)
-                {
-                    MoveUp();
-                }
-            }
         }
         public void GetNewPassanger(Dormitory dorm)
         {
@@ -215,7 +159,12 @@ namespace DiscreteSimulationOfDormitory
                     {
                         break;
                     }
+                    
                 }
+            }
+            if (ElevatorQueues[CurrentFloor].Count == 0)
+            {
+                FloorsToStop.Remove(CurrentFloor);
             }
         }
 
