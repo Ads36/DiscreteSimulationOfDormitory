@@ -15,6 +15,7 @@ namespace DiscreteSimulationOfDormitory
 		public int TimeInWashingMachinesRoom { get; private set; } = 1800;
 		public int TimeOut { get; private set; } = 3600;
 		public int CurrentFloor;
+		public int TimeBetweenEvents { get; private set; } = 8 * 3600;
 		public Place CurrentPlace;
 		public enum Place
 		{

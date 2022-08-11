@@ -33,7 +33,7 @@ namespace DiscreteSimulationOfDormitory
 	class ElevatorMovingUp : Event
     {
 		private Elevator el;
-		public ElevatorMovingUp(int time, Elevator elev) : base(time)
+		public ElevatorMovingUp(int time, Elevator elev, int secondaryPriority) : base(time)
 		{
 			el = elev;
 		}
@@ -46,22 +46,22 @@ namespace DiscreteSimulationOfDormitory
 				el.WhoGetsOff(dorm, Time);
 			}
 			
-			el.GetNewPassanger(dorm);
+			el.GetNewPassanger(dorm, Time);
 			
 			if (el.FloorsToStop.Count > 0)
 			{
 
 				if (el.CurrentFloor < el.FloorsToStop.Max && el.CurrentState == Elevator.State.Up && !el.IsFull())
 				{
-					dorm.ScheduleEvent(new ElevatorMovingUp(Time + el.SpeedBetweenFloors, el));
+					dorm.ScheduleEvent(new ElevatorMovingUp(Time + el.SpeedBetweenFloors, el, el.Number));
 				}
 				else if (el.CurrentFloor == el.FloorsToStop.Max)
 				{
-					dorm.ScheduleEvent(new ElevatorMovingDown(Time + el.SpeedBetweenFloors, el));
+					dorm.ScheduleEvent(new ElevatorMovingDown(Time + el.SpeedBetweenFloors, el, el.Number));
 				}
 				else
 				{
-					dorm.ScheduleEvent(new ElevatorMovingDown(Time + el.SpeedBetweenFloors, el));
+					dorm.ScheduleEvent(new ElevatorMovingDown(Time + el.SpeedBetweenFloors, el, el.Number));
 				}
 			}
 			else
@@ -73,7 +73,7 @@ namespace DiscreteSimulationOfDormitory
 	class ElevatorMovingDown : Event
 	{
 		private Elevator el;
-		public ElevatorMovingDown(int time, Elevator elev) : base(time)
+		public ElevatorMovingDown(int time, Elevator elev, int secondaryPriority) : base(time)
 		{
 			el = elev;
 		}
@@ -86,21 +86,21 @@ namespace DiscreteSimulationOfDormitory
 				el.WhoGetsOff(dorm, Time);
 			}
 			
-			el.GetNewPassanger(dorm);
+			el.GetNewPassanger(dorm, Time);
 			
 			if (el.FloorsToStop.Count > 0)
 			{
 				if (el.CurrentFloor > el.FloorsToStop.Min && el.CurrentState == Elevator.State.Down)
 				{
-					dorm.ScheduleEvent(new ElevatorMovingDown(Time + el.SpeedBetweenFloors, el));
+					dorm.ScheduleEvent(new ElevatorMovingDown(Time + el.SpeedBetweenFloors, el, el.Number));
 				}
 				else if (el.CurrentFloor == el.FloorsToStop.Min)
 				{
-					dorm.ScheduleEvent(new ElevatorMovingUp(Time + el.SpeedBetweenFloors, el));
+					dorm.ScheduleEvent(new ElevatorMovingUp(Time + el.SpeedBetweenFloors, el, el.Number));
 				}
 				else
 				{
-					dorm.ScheduleEvent(new ElevatorMovingUp(Time + el.SpeedBetweenFloors, el));
+					dorm.ScheduleEvent(new ElevatorMovingUp(Time + el.SpeedBetweenFloors, el, el.Number));
 				}
 			}
 			else
@@ -112,7 +112,7 @@ namespace DiscreteSimulationOfDormitory
 	class PressingButtonOfElevator : Event
     {
 		private Elevator el;
-		public PressingButtonOfElevator(int time, Elevator elev) : base(time)
+		public PressingButtonOfElevator(int time, Elevator elev, int secondaryPriority) : base(time)
 		{
 			el = elev;
 			
@@ -122,13 +122,11 @@ namespace DiscreteSimulationOfDormitory
 		{
             if (el.CurrentFloor < el.FloorsToStop.Max && el.CurrentState == Elevator.State.Stop)
             {
-				Console.WriteLine("neco");
-				dorm.ScheduleEvent(new ElevatorMovingUp(Time, el));
+				dorm.ScheduleEvent(new ElevatorMovingUp(Time, el, el.Number));
 			}
             else if (el.CurrentFloor > el.FloorsToStop.Min && el.CurrentState == Elevator.State.Stop)
             {
-				Console.WriteLine("neco");
-				dorm.ScheduleEvent(new ElevatorMovingDown(Time, el));
+				dorm.ScheduleEvent(new ElevatorMovingDown(Time, el, el.Number));
             }
             
 		}
@@ -136,7 +134,7 @@ namespace DiscreteSimulationOfDormitory
 	class StudentWantsSomething : Event
     {
 		private Student student;
-		public StudentWantsSomething(int time, Student stud) : base(time)
+		public StudentWantsSomething(int time, Student stud, int secondaryPriority) : base(time)
         {
 			student = stud;
         }
@@ -145,8 +143,20 @@ namespace DiscreteSimulationOfDormitory
         {
 			dorm.StudentWantsSmt(student, Time);
         }
-
     }
+	class ArrivingToFirstFloorByFoot : Event
+    {
+		private Student student;
+		public ArrivingToFirstFloorByFoot(int time, Student stud, int secondaryPriority) : base(time)
+		{
+			student = stud;
+		}
+		protected override int PrimaryPriority => 12;
+		protected override void Action(Dormitory dorm)
+		{
+			dorm.ArrivingToFirstFloor(student, Time);
+		}
+	}
 	class OpeningDorms : Event
     {
 		public OpeningDorms(int time) : base(time)
@@ -174,9 +184,11 @@ namespace DiscreteSimulationOfDormitory
 	class AddToQueue : Event
     {
 		private Student student;
-		public AddToQueue(int time, Student stud) : base(time)
+		
+		public AddToQueue(int time, Student stud, int secondaryPriority) : base(time)
 		{
 			student = stud;
+			SecondaryPriority = secondaryPriority;
 		}
 		protected override int PrimaryPriority => 4;
 		protected override void Action(Dormitory dorm)
@@ -199,20 +211,22 @@ namespace DiscreteSimulationOfDormitory
 	class ComingInDormitory : Event
     {
 		private Student student;
-		public ComingInDormitory(int time, Student stud) : base(time)
+		private bool WantsSomething;
+		public ComingInDormitory(int time, Student stud, int secondaryPriority, bool wantsSomething) : base(time)
 		{
 			student = stud;
+			WantsSomething = wantsSomething;
 		}
 		protected override int PrimaryPriority => 4;
 		protected override void Action(Dormitory dorm)
 		{
-			dorm.EnteringDormitory(student, Time);
+			dorm.EnteringDormitory(student, Time, WantsSomething);
 		}
 	}
 	class LeavingDormitory : Event
     {
 		private Student student;
-		public LeavingDormitory(int time, Student stud) : base(time)
+		public LeavingDormitory(int time, Student stud, int secondaryPriority) : base(time)
 		{
 			student = stud;
 		}
@@ -236,6 +250,7 @@ namespace DiscreteSimulationOfDormitory
     }
 	public abstract class BorrowingAndReturningThings : Event
     {
+		private Student student;
 		protected enum ThingsToBorrow
         {
 			GymKeys,
@@ -244,10 +259,11 @@ namespace DiscreteSimulationOfDormitory
 			VacuumCleaner,
 			MusicRoomKeys
         }
-		protected abstract int SecondaryPriority { get;}
+		protected new abstract int SecondaryPriority { get;}
 		public BorrowingAndReturningThings(int time, Student who, int priority = 1) : base(time)
         {
 			//SecondaryPriority = priority;
+			student = who;
 		}
 		public int CompareTo(BorrowingAndReturningThings other)
         {
@@ -257,7 +273,7 @@ namespace DiscreteSimulationOfDormitory
 			{
 				if (SecondaryPriority.CompareTo(other.SecondaryPriority) == 0)
 				{
-					return 1;
+					return student.Number.CompareTo(other.student.Number);
 				}
 				return SecondaryPriority.CompareTo(other.SecondaryPriority);
 			}

@@ -46,7 +46,7 @@ namespace DiscreteSimulationOfDormitory
         public List<string> PorterNames = new();
         public int CurrentPorterIndex;
         public int NumberOfStudents;
-        public int MaxTime = 24 * 3600 * 1 / 8;
+        public int MaxTime = 24 * 3600 * 1;
         public int PorterServingTime = 30;
         public int PorterTime = 8 * 3600;
         public int NumberOfFloors { get;}
@@ -95,11 +95,9 @@ namespace DiscreteSimulationOfDormitory
         {
             for (int i = 0; i < NumberOfElevators; i++)
             {
-                Elevator elevator = new Elevator(ElevatorCapacity, 0, NumberOfFloors, this);
-                elevator.Number = i;
+                Elevator elevator = new Elevator(ElevatorCapacity, 0, NumberOfFloors, i + 1);
                 elevator.CurrentState = Elevator.State.Stop;
                 Elevators.Add(elevator);
-                
             }
         }
         public void InitializeStudents()
@@ -108,17 +106,18 @@ namespace DiscreteSimulationOfDormitory
             {
                 Student stud = new Student(this);
                 Students.Add(stud);
-                calendar.ScheduleEvent(new StudentWantsSomething(i * 10, stud));
+                calendar.ScheduleEvent(new StudentWantsSomething(i * 10, stud, stud.Number));
             }
         }
         public void AddToElevatorQueue(Student stud, int destination, int currentFloor, int whichElev, int time) 
         {
             Prevoznik prevoz = new Prevoznik(stud, destination);
-            Elevators[whichElev].ElevatorQueues[currentFloor].Enqueue(prevoz);
-            Elevators[whichElev].FloorsToStop.Add(destination);
-            Elevators[whichElev].FloorsToStop.Add(currentFloor);
-            Console.WriteLine($"<{ConvertToTime(time)}> Student {stud.Number} is pressing elevator {Elevators[whichElev].Number} button at floor {currentFloor} heading to floor {destination}");
-            calendar.ScheduleEvent(new PressingButtonOfElevator(time, Elevators[whichElev]));
+            Elevator elevator = Elevators[whichElev];
+            elevator.ElevatorQueues[currentFloor].Enqueue(prevoz);
+            elevator.FloorsToStop.Add(destination);
+            elevator.FloorsToStop.Add(currentFloor);
+            Console.WriteLine($"<{ConvertToTime(time)}> Student {stud.Number} is pressing elevator {elevator.Number} button at floor {currentFloor} heading to floor {destination}");
+            calendar.ScheduleEvent(new PressingButtonOfElevator(time, elevator, elevator.Number));
         }
         public void StudentWantsSmt(Student stud, int time)
         {
@@ -130,39 +129,42 @@ namespace DiscreteSimulationOfDormitory
             }
             else if (stud.CurrentPlace == Student.Place.Outside)
             {
-                calendar.ScheduleEvent(new ComingInDormitory(time, stud));
-                PorterQueue.Enqueue(stud);
-                stud.CurrentPlace = Student.Place.WaitingInQueue;
+                calendar.ScheduleEvent(new ComingInDormitory(time, stud, stud.Number, true));
             }
             else
             {
-                //do nothing, student is doing something and can't do 2 things at the same time
+                calendar.ScheduleEvent(new StudentWantsSomething(time + stud.TimeBetweenEvents, stud, stud.Number)); 
             }
         }
         public void ArrivingToFirstFloor(Student stud, int time)
         {
             if (stud.pozadavek == Student.WhatHeWants.Nothing)
             {
-                calendar.ScheduleEvent(new LeavingDormitory(time, stud));
+                calendar.ScheduleEvent(new LeavingDormitory(time, stud, stud.Number));
             }
             else
             {
-                calendar.ScheduleEvent(new AddToQueue(time, stud));
+                calendar.ScheduleEvent(new AddToQueue(time, stud, stud.Number));
             }
         }
-        public void EnteringDormitory(Student stud, int time)
+        public void EnteringDormitory(Student stud, int time, bool wantsSomething)
         {
             if (stud.CurrentPlace == Student.Place.Outside)
             {
                 Console.WriteLine($"<{ConvertToTime(time)}> Student {stud.Number} is entering dormitory");
-                stud.CurrentPlace = Student.Place.WaitingForElevator;
+                if (wantsSomething)
+                {
+                    AddToPorterQueue(time, stud);
+                    //stud.CurrentPlace = Student.Place.WaitingInQueue;
+                }
+                //stud.CurrentPlace = Student.Place.WaitingForElevator;
             }
         }
         public void LeavingDormitory(Student stud, int time)
         {
             Console.WriteLine($"<{ConvertToTime(time)}> Student {stud.Number} is leaving dormitory");
             stud.CurrentPlace = Student.Place.Outside;
-            calendar.ScheduleEvent(new ComingInDormitory(time + stud.TimeOut, stud));
+            calendar.ScheduleEvent(new ComingInDormitory(time + stud.TimeOut, stud, stud.Number, false));
         }
         public void Open(int time)
         {
@@ -182,17 +184,20 @@ namespace DiscreteSimulationOfDormitory
         {
             StudentsInGym.Remove(who);
             Console.WriteLine($"<{ConvertToTime(time)}> Student {who.Number} returns keys from the gym");
+            AddToElevatorQueue(who, who.HomeFloor, 0, random.Next(0, NumberOfElevators), time);
         }
         public void BorrowingGymKeys(int time, Student who)
         {
             StudentsInGym.Add(who);
-            calendar.ScheduleEvent(new AddToQueue(time + who.TimeInGym, who));
+            calendar.ScheduleEvent(new AddToQueue(time + who.TimeInGym, who, who.Number));
             who.pozadavek = Student.WhatHeWants.ReturningGymKeys;
+            who.CurrentPlace = Student.Place.InGym;
             Console.WriteLine($"<{ConvertToTime(time)}> Student {who.Number} borrows keys from the gym");
         }
         public void AddToPorterQueue(int time, Student who)
         {
             PorterQueue.Enqueue(who);
+            who.CurrentPlace = Student.Place.WaitingInQueue;
             Console.WriteLine($"<{ConvertToTime(time)}> Student {who.Number} enters the queue");
             if (PorterQueue.Count == 1)
             {
@@ -226,7 +231,7 @@ namespace DiscreteSimulationOfDormitory
                 default:
                     break;
             }
-            AddToElevatorQueue(stud, stud.HomeFloor, 0, random.Next(0, NumberOfElevators), time);
+            //AddToElevatorQueue(stud, stud.HomeFloor, 0, random.Next(0, NumberOfElevators), time);
             if (PorterQueue.Count>0)
             {
                 calendar.ScheduleEvent(new NextWaiterInQueue(time + PorterServingTime));
@@ -239,7 +244,7 @@ namespace DiscreteSimulationOfDormitory
 
         static void Main(string[] args)
         {
-            Dormitory dorm = new Dormitory(20,5,20,1,50,5);
+            Dormitory dorm = new Dormitory(20,5,20,1,50,10);
             dorm.Inititalize();
             //dorm.PorterNames.Add("Adam");
             //dorm.PorterNames.Add("Milan");
