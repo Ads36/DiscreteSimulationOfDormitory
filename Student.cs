@@ -41,13 +41,13 @@ namespace DiscreteSimulationOfDormitory
             {
 				CurrentPlace = Place.Outside;
             }
-			TimeInGym = stud.TimeInGym;
-			TimeInMusicRoom = stud.TimeInMusicRoom;
-			TimeInRoom = stud.TimeInRoom;
-			TimeInWashingMachinesRoom = stud.TimeInWashingMachinesRoom;
-			TimeInStudyRoom = stud.TimeInStudyRoom;
-			TimeOut = stud.TimeOut;
-			TimeBetweenEvents = stud.TimeBetweenEvents;
+			TimeInGym = (int)stud.TimeInGym;
+			TimeInMusicRoom = (int)stud.TimeInMusicRoom;
+			TimeInRoom = (int)stud.TimeInRoom;
+			TimeInWashingMachinesRoom = (int)stud.TimeInWashingMachinesRoom;
+			TimeInStudyRoom = (int)stud.TimeInStudyRoom;
+			TimeOut = (int)stud.TimeOut;
+			TimeBetweenEvents = (int)stud.TimeBetweenEvents;
 
 			Request = RandomRequest();
 		}

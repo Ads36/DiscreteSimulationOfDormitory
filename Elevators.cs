@@ -34,10 +34,10 @@ namespace DiscreteSimulationOfDormitory
 
         public Elevator(Dormitory dorm, Elevators elev)
         {
-            Capacity = elev.Capacity;
+            Capacity = (int)elev.Capacity;
             CurrentFloor = 0;
             MaxFloor = dorm.NumberOfFloors;
-            SpeedBetweenFloors = elev.SpeedBetweenFloors;
+            SpeedBetweenFloors = (int)elev.SpeedBetweenFloors;
             //make instances of queues
             for (int i = 0; i < MaxFloor + 1; i++)
             {
