@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 namespace DiscreteSimulationOfDormitory
 {
+	//main abstract class for events
 	public abstract class Event : IComparable<Event>
 	{
         public int Time { get; }
@@ -30,6 +31,130 @@ namespace DiscreteSimulationOfDormitory
         }
 	}
 	//events: opening/closing, changeofvratny, borrowing keys - gym, music room, washing machines, elevators, gym, study rooms, entering and leaving
+	class OpeningDorms : Event
+	{
+		public OpeningDorms(int time) : base(time)
+		{
+		}
+		protected override int PrimaryPriority => 1;
+		protected override void Action(Dormitory dorm)
+		{
+			dorm.Open(Time);
+		}
+	}
+	class ChangingGatekeepers : Event
+	{
+		public ChangingGatekeepers(int time) : base(time)
+		{
+		}
+		protected override int PrimaryPriority => 3;
+		protected override void Action(Dormitory dorm)
+		{
+			dorm.ChangeGatekeepers(Time);
+		}
+	}
+	class AddToQueue : Event
+	{
+		private Student student;
+		public AddToQueue(int time, Student stud, int secondaryPriority) : base(time)
+		{
+			student = stud;
+			SecondaryPriority = secondaryPriority;
+		}
+		protected override int PrimaryPriority => 4;
+		protected override void Action(Dormitory dorm)
+		{
+			dorm.AddToGatekeeperQueue(Time, student);
+		}
+	}
+	class AddToElevatorQueue : Event
+	{
+		private Student student;
+		private int destination;
+		private int currentFloor;
+		private Elevator elevator;
+		public AddToElevatorQueue(Student stud, int destinationFloor, int currentFloor1, Elevator elev, int time) : base(time)
+		{
+			student = stud;
+			destination = destinationFloor;
+			currentFloor = currentFloor1;
+			elevator = elev;
+		}
+		protected override int PrimaryPriority => 5;
+		protected override void Action(Dormitory dorm)
+		{
+			dorm.AddToElevatorQueue(student, destination, currentFloor, elevator, Time + 1);
+		}
+	}
+	class NextWaiterInQueue : Event
+	{
+		public NextWaiterInQueue(int time) : base(time)
+		{
+		}
+		protected override int PrimaryPriority => 6;
+		protected override void Action(Dormitory dorm)
+		{
+			dorm.RemoveFromQueue(Time);
+		}
+	}
+	class StudentWantsSomething : Event
+	{
+		private Student student;
+		public StudentWantsSomething(int time, Student stud, int secondaryPriority) : base(time)
+		{
+			student = stud;
+		}
+		protected override int PrimaryPriority => 7;
+		protected override void Action(Dormitory dorm)
+		{
+			dorm.StudentWantsSomthingFromGatekeeper(student, Time);
+		}
+	}
+	class ArrivingToFirstFloorByFoot : Event
+	{
+		private Student student;
+		public ArrivingToFirstFloorByFoot(int time, Student stud, int secondaryPriority) : base(time)
+		{
+			student = stud;
+		}
+		protected override int PrimaryPriority => 8;
+		protected override void Action(Dormitory dorm)
+		{
+			if (student.CurrentFloor != 0)
+			{
+				dorm.ArrivingToFirstFloor(student, Time);
+			}
+		}
+	}
+	class EnteringDormitory : Event
+	{
+		private Student student;
+		private bool WantsSomething;
+		public EnteringDormitory(int time, Student stud, int secondaryPriority, bool wantsSomething) : base(time)
+		{
+			student = stud;
+			WantsSomething = wantsSomething;
+		}
+		protected override int PrimaryPriority => 9;
+		protected override void Action(Dormitory dorm)
+		{
+			dorm.EnteringDormitory(student, Time, WantsSomething);
+		}
+	}
+	class LeavingDormitory : Event
+	{
+		private Student student;
+		public LeavingDormitory(int time, Student stud, int secondaryPriority) : base(time)
+		{
+			student = stud;
+		}
+		protected override int PrimaryPriority => 10;
+		protected override void Action(Dormitory dorm)
+		{
+			dorm.LeavingDormitory(student, Time);
+		}
+	}
+
 	class ElevatorMovingUp : Event
     {
 		private Elevator el;
@@ -37,12 +162,12 @@ namespace DiscreteSimulationOfDormitory
 		{
 			el = elev;
 		}
-		protected override int PrimaryPriority => 8;
+		protected override int PrimaryPriority => 11;
 		protected override void Action(Dormitory dorm)
 		{
 			if (el.StudentsIn.Count > 1)
             {
-				el.WhoGetsOff(dorm, Time);
+				el.GettingOffElevator(dorm, Time);
 			}
 			el.GetNewPassanger(dorm, Time);
 			el.MoveUp();
@@ -85,12 +210,12 @@ namespace DiscreteSimulationOfDormitory
 		{
 			el = elev;
 		}
-		protected override int PrimaryPriority => 9;
+		protected override int PrimaryPriority => 12;
 		protected override void Action(Dormitory dorm)
 		{
 			if (el.StudentsIn.Count > 0)
             {
-				el.WhoGetsOff(dorm, Time);
+				el.GettingOffElevator(dorm, Time);
 			}
 			el.GetNewPassanger(dorm, Time);
 			el.MoveDown();
@@ -146,142 +271,19 @@ namespace DiscreteSimulationOfDormitory
             }
 		}
 	}
-	class AddToElevatorQueue : Event
-    {
-		private Student student;
-		private int destination;
-		private int currentFloor;
-		private Elevator elevator;
-		public AddToElevatorQueue(Student stud, int destinationFloor, int currentFloor1, Elevator elev, int time) : base(time)
-        {
-			student = stud;
-			destination = destinationFloor;
-			currentFloor = currentFloor1;
-			elevator = elev;
-        }
-		protected override int PrimaryPriority => 2;
-        protected override void Action(Dormitory dorm)
-        {
-			dorm.AddToElevatorQueue(student, destination, currentFloor, elevator, Time+1);
-        }
-    }
-	class StudentWantsSomething : Event
-    {
-		private Student student;
-		public StudentWantsSomething(int time, Student stud, int secondaryPriority) : base(time)
-        {
-			student = stud;
-        }
-		protected override int PrimaryPriority => 8;
-        protected override void Action(Dormitory dorm)
-        {
-			dorm.StudentWantsSmt(student, Time);
-        }
-    }
-	class ArrivingToFirstFloorByFoot : Event
-    {
-		private Student student;
-		public ArrivingToFirstFloorByFoot(int time, Student stud, int secondaryPriority) : base(time)
-		{
-			student = stud;
-		}
-		protected override int PrimaryPriority => 12;
-		protected override void Action(Dormitory dorm)
-		{
-            if (student.CurrentFloor != 0)
-            {
-				dorm.ArrivingToFirstFloor(student, Time);
-			}
-		}
-	}
-	class OpeningDorms : Event
-    {
-		public OpeningDorms(int time) : base(time)
-        {
-        }
-		protected override int PrimaryPriority => 1;
-		protected override void Action(Dormitory dorm)
-        {
-			dorm.Open(Time);
-        }
-    }
-	class ChangingPorters : Event
-    {
-		public ChangingPorters(int time) : base(time)
-        {
-        }
-		protected override int PrimaryPriority => 2;
-        protected override void Action(Dormitory dorm)
-        {
-			dorm.ChangePorters(Time);
-        }
-    }
-	class AddToQueue : Event
-    {
-		private Student student;
-		public AddToQueue(int time, Student stud, int secondaryPriority) : base(time)
-		{
-			student = stud;
-			SecondaryPriority = secondaryPriority;
-		}
-		protected override int PrimaryPriority => 4;
-		protected override void Action(Dormitory dorm)
-		{
-			dorm.AddToPorterQueue(Time, student);
-		}
-	}
-	class ComingInDormitory : Event
-    {
-		private Student student;
-		private bool WantsSomething;
-		public ComingInDormitory(int time, Student stud, int secondaryPriority, bool wantsSomething) : base(time)
-		{
-			student = stud;
-			WantsSomething = wantsSomething;
-		}
-		protected override int PrimaryPriority => 12;
-		protected override void Action(Dormitory dorm)
-		{
-			dorm.EnteringDormitory(student, Time, WantsSomething);
-		}
-	}
-	class LeavingDormitory : Event
-    {
-		private Student student;
-		public LeavingDormitory(int time, Student stud, int secondaryPriority) : base(time)
-		{
-			student = stud;
-		}
-		protected override int PrimaryPriority => 13;
-		protected override void Action(Dormitory dorm)
-		{
-			dorm.LeavingDormitory(student, Time);
-		}
-	}
-	class NextWaiterInQueue : Event
-    {
-		public NextWaiterInQueue(int time) : base(time)
-        {
-        }
-		protected override int PrimaryPriority => 5;
-        protected override void Action(Dormitory dorm)
-        {
-			dorm.RemoveFromQueue(Time);
-        }
-    }
 	public abstract class BorrowingAndReturningThings : Event
     {
 		private Student student;
+		//jsut list of all things that could be borrowed
 		protected enum ThingsToBorrow
         {
 			GymKeys,
 			WashingMachineKeys,
 			StudyRoomKeys,
-			VacuumCleaner,
 			MusicRoomKeys
         }
 		protected new abstract int SecondaryPriority { get;}
-		public BorrowingAndReturningThings(int time, Student who, int priority = 1) : base(time)
+		public BorrowingAndReturningThings(int time, Student who) : base(time)
         {
 			student = who;
 		}
@@ -299,7 +301,7 @@ namespace DiscreteSimulationOfDormitory
 			}
 			return PrimaryPriority.CompareTo(other.PrimaryPriority);
 		}
-		protected override int PrimaryPriority => 1;
+		protected override int PrimaryPriority => 2;
     }
 	class BorrowingGymKeys : BorrowingAndReturningThings
     {

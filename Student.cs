@@ -2,21 +2,20 @@
 using System.Collections.Generic;
 namespace DiscreteSimulationOfDormitory
 {
-
 	public class Student
 	{
-		public Random random = new Random();
+		private Random random = new Random();
 		public int Number { get; }
 		private static int currentNumber = 1;
 		public int HomeFloor { get; }
-		public int TimeInGym { get; private set; } = 2700;
-		public int TimeInMusicRoom { get; private set; } = 3600;
-		public int TimeInStudyRoom { get; private set; } = 5400;
-		public int TimeInWashingMachinesRoom { get; private set; } = 1800;
-		public int TimeOut { get; private set; } = 8 * 3600;
-		public int TimeInRoom { get; private set; } = 5 * 3600;
+		public int TimeInGym { get; private set; }
+		public int TimeInMusicRoom { get; private set; }
+		public int TimeInStudyRoom { get; private set; }
+		public int TimeInWashingMachinesRoom { get; private set; }
+		public int TimeOut { get; private set; }
+		public int TimeInRoom { get; private set; }
 		public int CurrentFloor;
-		public int TimeBetweenEvents { get; private set; } = 24 * 3600;
+		public int TimeBetweenEvents { get; private set; }
 		public Place CurrentPlace { get; set; }
 		public enum Place
 		{
@@ -29,7 +28,7 @@ namespace DiscreteSimulationOfDormitory
 			InStudyRoom,
 			InWashingMachineRoom
 		}
-		public Student(Dormitory dorm)
+		public Student(Dormitory dorm, Students stud)
 		{
 			HomeFloor = random.Next(1, dorm.NumberOfFloors);
 			Number = currentNumber++;
@@ -42,6 +41,14 @@ namespace DiscreteSimulationOfDormitory
             {
 				CurrentPlace = Place.Outside;
             }
+			TimeInGym = stud.TimeInGym;
+			TimeInMusicRoom = stud.TimeInMusicRoom;
+			TimeInRoom = stud.TimeInRoom;
+			TimeInWashingMachinesRoom = stud.TimeInWashingMachinesRoom;
+			TimeInStudyRoom = stud.TimeInStudyRoom;
+			TimeOut = stud.TimeOut;
+			TimeBetweenEvents = stud.TimeBetweenEvents;
+
 			Request = RandomRequest();
 		}
 		public WhatHeWants Request { get; set; }
@@ -57,14 +64,7 @@ namespace DiscreteSimulationOfDormitory
 			ReturningStudyRoomKeys,
 			Nothing
 		}
-		public bool IsReadyToGoQueue()
-        {
-            if (CurrentPlace == Place.InRoom || CurrentPlace == Place.Outside)
-            {
-				return true;
-			}
-			return false;
-        }
+		//generating random requests
 		public WhatHeWants RandomRequest()
         {
 			int randomness = random.Next(0, 6);
@@ -74,6 +74,7 @@ namespace DiscreteSimulationOfDormitory
 				case 0:
 					request = Student.WhatHeWants.GymKeys;
 					break;
+				//most people go to the gym, so the probability that student is going to the gym is doubled
 				case 1:
 					request = Student.WhatHeWants.GymKeys;
 					break;

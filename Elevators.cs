@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 namespace DiscreteSimulationOfDormitory
 {
+    //this class is used as class that holds student and his destination while in the elevator
     public class Transfer
     {
         public int DestinationFloor { get; set; }
         public Student TransferredStudent;
         public int Patience { get; set; }
-        public int MaxPatience { get; } = 3;
+        public int MaxPatience { get; private set; } = 3;
         public Transfer(Student stud, int floor)
         {
             DestinationFloor = floor;
@@ -21,26 +22,30 @@ namespace DiscreteSimulationOfDormitory
     }
     public class Elevator
     {
-        public List<List<Transfer>> ElevatorQueues = new List<List<Transfer>>();
-        public int CurrentFloor;
-        public int Capacity;
-        public int MaxFloor;
-        public int SpeedBetweenFloors = 5;
+        private List<List<Transfer>> ElevatorQueues = new();
+        private static int currentNumber = 1;
+        public int CurrentFloor { get; private set; }
+        private int Capacity;
+        private int MaxFloor;
+        public int SpeedBetweenFloors { get; private set; }
         public int Number { get; private set; }
         public SortedSet<int> FloorsToStop = new();
         public List<Transfer> StudentsIn = new();
 
-        public Elevator(int capacity, int floor, int maxFloor, int number)
+        public Elevator(Dormitory dorm, Elevators elev)
         {
-            Capacity = capacity;
-            CurrentFloor = floor;
-            MaxFloor = maxFloor;
-            for (int i = 0; i < maxFloor + 1; i++)
+            Capacity = elev.Capacity;
+            CurrentFloor = 0;
+            MaxFloor = dorm.NumberOfFloors;
+            SpeedBetweenFloors = elev.SpeedBetweenFloors;
+            //make instances of queues
+            for (int i = 0; i < MaxFloor + 1; i++)
             {
                 List<Transfer> queue = new();
                 ElevatorQueues.Add(queue);
             }
-            Number = number;
+            CurrentState = State.Stop;
+            Number = currentNumber++;
         }
         public enum State
         {
@@ -49,6 +54,10 @@ namespace DiscreteSimulationOfDormitory
             Stop
         }
         public State CurrentState { get; set; }
+        public void EnqueueOnFloor(int floor, Transfer tran)
+        {
+            ElevatorQueues[floor].Add(tran);
+        }
         public void MoveDown()
         {
             CurrentState = State.Down;
@@ -57,9 +66,10 @@ namespace DiscreteSimulationOfDormitory
             {
                 CurrentFloor = 0;
             }
-            //Console.WriteLine($"Jedu dolu a jsem v {CurrentFloor}");
-            //Console.WriteLine($"jeste tolik zastavek {FloorsToStop.Count}");
-            //Console.WriteLine($"Mam v sobe {StudentsIn.Count}");
+            /*this commentary is only for debugging purposes
+            Console.WriteLine($"Jedu dolu a jsem v {CurrentFloor}");
+            Console.WriteLine($"jeste tolik zastavek {FloorsToStop.Count}");
+            Console.WriteLine($"Mam v sobe {StudentsIn.Count}");*/
         }
         public void MoveUp()
         {
@@ -69,27 +79,31 @@ namespace DiscreteSimulationOfDormitory
             {
                 CurrentFloor = MaxFloor;
             }
-            //Console.WriteLine($"Jedu nahoru a jsem v {CurrentFloor}");
-            //Console.WriteLine($"jeste tolik zastavek {FloorsToStop.Count}");
-            //Console.WriteLine($"Mam v sobe {StudentsIn.Count}");
+            /*this commentary is only for debugging purposes
+            Console.WriteLine($"Jedu nahoru a jsem v {CurrentFloor}");
+            Console.WriteLine($"jeste tolik zastavek {FloorsToStop.Count}");
+            Console.WriteLine($"Mam v sobe {StudentsIn.Count}");*/
         }
         public void Stop()
         {
             CurrentState = State.Stop;
         }
-        public void GetOnElevator(int time, Dormitory dorm)
+        private void GetOnElevator(int time, Dormitory dorm)
         {
             Transfer stud = ElevatorQueues[CurrentFloor][0];
+            //can't enter elevator, because it is full
             if (StudentsIn.Count == Capacity)
             {
                 Student student = stud.ReturnStudent();
                 Console.WriteLine($"<{dorm.ConvertToTime(time)}> Student {student.Number} can't enter elevator {Number}, because it is full");
                 stud.Patience++;
+                //check if student lost his patience or not
                 if (stud.Patience >= stud.MaxPatience)
                 {
                     stud.Patience = 0;
+                    ElevatorQueues[CurrentFloor].Remove(stud);
                     Console.WriteLine($"<{dorm.ConvertToTime(time)}> Student {student.Number} is losing hope and using stairs instead of elevators");
-                    dorm.calendar.ScheduleEvent(new ArrivingToFirstFloorByFoot(time + student.CurrentFloor * 20, student, student.Number));
+                    dorm.ScheduleEvent(new ArrivingToFirstFloorByFoot(time + student.CurrentFloor * 20, student, student.Number));
                 }
             }
             else
@@ -101,22 +115,24 @@ namespace DiscreteSimulationOfDormitory
                 FloorsToStop.Add(stud.DestinationFloor);
             }
         }
-        public void GetOffElevator(Transfer stud, Dormitory dorm, int time)
+        //called when student is leaving elevator
+        private void GetOffElevator(Transfer stud, Dormitory dorm, int time)
         {
             StudentsIn.Remove(stud);
             Student student = stud.ReturnStudent();
             student.CurrentFloor = CurrentFloor;
             Console.WriteLine($"<{dorm.ConvertToTime(time)}> Student {stud.ReturnStudent().Number} is getting off elevator {Number} at floor {CurrentFloor}");
+            //if he arrived at his floor
             if (CurrentFloor == student.HomeFloor)
             {
                 student.CurrentPlace = Student.Place.InRoom;
                 if (student.Request != Student.WhatHeWants.Nothing)
                 {
-                    student.Request = student.RandomRequest();
                     dorm.ScheduleEvent(new StudentWantsSomething(time + student.TimeInRoom, student, student.Number));
                 }
                 else
                 {
+                    //new request, to make simulation neverending
                     student.Request = student.RandomRequest();
                     dorm.ScheduleEvent(new StudentWantsSomething(time + student.TimeInRoom * 2, student, student.Number));
                 }
@@ -125,12 +141,13 @@ namespace DiscreteSimulationOfDormitory
             {
                 dorm.ArrivingToFirstFloor(student, time);
             }
+            //check if he wants to wash his clothes and than return
             if (student.Request == Student.WhatHeWants.ReturningWashingMachineKeys && CurrentFloor == dorm.WashingMachinesRoomFloor)
             {
                 dorm.ScheduleEvent(new AddToElevatorQueue(student, 0, dorm.WashingMachinesRoomFloor, this, time + student.TimeInWashingMachinesRoom));
             }
         }
-        public void WhoGetsOff(Dormitory dorm, int time)
+        public void GettingOffElevator(Dormitory dorm, int time)
         {
             if (DoesSomeoneGetOff())
             {
@@ -144,25 +161,6 @@ namespace DiscreteSimulationOfDormitory
                     }
                 }
                 FloorsToStop.Remove(CurrentFloor);
-            }
-        }
-        public State WhereToMove()
-        {
-            if (FloorsToStop.Count > 0)
-            {
-                if (CurrentFloor < FloorsToStop.Max)
-                {
-                    return State.Up;
-                }
-                else if (CurrentFloor > FloorsToStop.Min)
-                {
-                    return State.Down;
-                }
-                return State.Stop;
-            }
-            else
-            {
-                return State.Stop;
             }
         }
         public bool IsFull()
@@ -184,10 +182,12 @@ namespace DiscreteSimulationOfDormitory
             }
             return false;
         }
+        //get new tranferers
         public void GetNewPassanger(Dormitory dorm, int time)
         {
             if (ElevatorQueues[CurrentFloor].Count > 0)
             {
+                //only students in queue can get on elevator
                 for (int i = 0; i < ElevatorQueues[CurrentFloor].Count; i++)
                 {
                     if (StudentsIn.Count == Capacity)
@@ -197,6 +197,7 @@ namespace DiscreteSimulationOfDormitory
                     GetOnElevator(time, dorm);
                 }
             }
+            //no one else is waiting in queue, so this floor could be removed from stops
             if (ElevatorQueues[CurrentFloor].Count == 0)
             {
                 FloorsToStop.Remove(CurrentFloor);
