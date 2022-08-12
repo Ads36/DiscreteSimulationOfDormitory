@@ -67,14 +67,14 @@ namespace DiscreteSimulationOfDormitory
         public Dormitory(Dorms dorms, Elevators elev, Students stud)
         {
             calendar = new(this);
-            NumberOfFloors = dorms.NumberOfFloors;
-            NumberOfGatekeepers = dorms.NumberOfGatekeepers;
-            NumberOfStudents = dorms.NumberOfStudents;
-            NumberOfElevators = dorms.NumberOfElevators;
-            MaxTime = dorms.MaxTime;
-            GatekeeperServingTime = dorms.GatekeeperServingTime;
-            GatekeeperWorkTime = dorms.GatekeeperWorkDuration;
-            WashingMachinesRoomFloor = dorms.WashingMachinesRoomFloor;
+            NumberOfFloors = (int)dorms.NumberOfFloors;
+            NumberOfGatekeepers = (int)dorms.NumberOfGatekeepers;
+            NumberOfStudents = (int)dorms.NumberOfStudents;
+            NumberOfElevators = (int)dorms.NumberOfElevators;
+            MaxTime = (int)dorms.MaxTime;
+            GatekeeperServingTime = (int)dorms.GatekeeperServingTime;
+            GatekeeperWorkTime = (int)dorms.GatekeeperWorkDuration;
+            WashingMachinesRoomFloor = (int)dorms.WashingMachinesRoomFloor;
             elevator = elev;
             student = stud;
             Inititalize();
@@ -345,29 +345,29 @@ namespace DiscreteSimulationOfDormitory
     //struct for more convenient loading of files
     public struct Dorms
     {
-        public int NumberOfFloors;
-        public int NumberOfGatekeepers;
-        public int NumberOfStudents;
-        public int NumberOfElevators;
-        public int MaxTime;
-        public int GatekeeperServingTime;
-        public int GatekeeperWorkDuration;
-        public int WashingMachinesRoomFloor;
+        public uint NumberOfFloors;
+        public uint NumberOfGatekeepers;
+        public uint NumberOfStudents;
+        public uint NumberOfElevators;
+        public uint MaxTime;
+        public uint GatekeeperServingTime;
+        public uint GatekeeperWorkDuration;
+        public uint WashingMachinesRoomFloor;
     }
     public struct Elevators
     {
-        public int Capacity;
-        public int SpeedBetweenFloors;
+        public uint Capacity;
+        public uint SpeedBetweenFloors;
     }
     public struct Students
     {
-        public int TimeInGym;
-        public int TimeInMusicRoom;
-        public int TimeInStudyRoom;
-        public int TimeInWashingMachinesRoom;
-        public int TimeOut;
-        public int TimeInRoom;
-        public int TimeBetweenEvents;
+        public uint TimeInGym;
+        public uint TimeInMusicRoom;
+        public uint TimeInStudyRoom;
+        public uint TimeInWashingMachinesRoom;
+        public uint TimeOut;
+        public uint TimeInRoom;
+        public uint TimeBetweenEvents;
     }
     class Program
     {
@@ -386,28 +386,35 @@ namespace DiscreteSimulationOfDormitory
                 //reading from file input.txt
                 using (var input = new StreamReader("input.txt"))
                 {
-                    dormitory.NumberOfFloors = int.Parse(input.ReadLine());
-                    dormitory.NumberOfGatekeepers = int.Parse(input.ReadLine());
-                    dormitory.NumberOfStudents = int.Parse(input.ReadLine());
-                    dormitory.NumberOfElevators = int.Parse(input.ReadLine());
-                    dormitory.MaxTime = int.Parse(input.ReadLine());
-                    dormitory.GatekeeperServingTime = int.Parse(input.ReadLine());
-                    dormitory.GatekeeperWorkDuration = int.Parse(input.ReadLine());
-                    dormitory.WashingMachinesRoomFloor = int.Parse(input.ReadLine());
-                    elevator.Capacity = int.Parse(input.ReadLine());
-                    elevator.SpeedBetweenFloors = int.Parse(input.ReadLine());
-                    student.TimeInGym = int.Parse(input.ReadLine());
-                    student.TimeInMusicRoom = int.Parse(input.ReadLine());
-                    student.TimeInStudyRoom = int.Parse(input.ReadLine());
-                    student.TimeInWashingMachinesRoom = int.Parse(input.ReadLine());
-                    student.TimeOut = int.Parse(input.ReadLine());
-                    student.TimeInRoom = int.Parse(input.ReadLine());
-                    student.TimeBetweenEvents = int.Parse(input.ReadLine());
+                    dormitory.NumberOfFloors = uint.Parse(input.ReadLine());
+                    dormitory.NumberOfGatekeepers = uint.Parse(input.ReadLine());
+                    dormitory.NumberOfStudents = uint.Parse(input.ReadLine());
+                    dormitory.NumberOfElevators = uint.Parse(input.ReadLine());
+                    dormitory.MaxTime = uint.Parse(input.ReadLine());
+                    dormitory.GatekeeperServingTime = uint.Parse(input.ReadLine());
+                    dormitory.GatekeeperWorkDuration = uint.Parse(input.ReadLine());
+                    dormitory.WashingMachinesRoomFloor = uint.Parse(input.ReadLine());
+                    elevator.Capacity = uint.Parse(input.ReadLine());
+                    elevator.SpeedBetweenFloors = uint.Parse(input.ReadLine());
+                    student.TimeInGym = uint.Parse(input.ReadLine());
+                    student.TimeInMusicRoom = uint.Parse(input.ReadLine());
+                    student.TimeInStudyRoom = uint.Parse(input.ReadLine());
+                    student.TimeInWashingMachinesRoom = uint.Parse(input.ReadLine());
+                    student.TimeOut = uint.Parse(input.ReadLine());
+                    student.TimeInRoom = uint.Parse(input.ReadLine());
+                    student.TimeBetweenEvents = uint.Parse(input.ReadLine());
                 }
             }
             catch (FileNotFoundException)
             {
                 Console.WriteLine("Can't find input file. Have you named it correctly? (input.txt)");
+                Console.WriteLine("Press enter to exit application");
+                Console.ReadLine();
+                Environment.Exit(0);
+            }
+            catch (OverflowException)
+            {
+                Console.WriteLine("A number in input file is either smaller than 0 or very big. Check input file data values.");
                 Console.WriteLine("Press enter to exit application");
                 Console.ReadLine();
                 Environment.Exit(0);
@@ -421,7 +428,7 @@ namespace DiscreteSimulationOfDormitory
             }
             catch (ArgumentNullException)
             {
-                Console.WriteLine("There aren't enough integers in input file");
+                Console.WriteLine("There aren't enough (17 is needed) integers in input file.");
                 Console.WriteLine("Press enter to exit application");
                 Console.ReadLine();
                 Environment.Exit(0);
