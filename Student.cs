@@ -13,49 +13,38 @@ namespace DiscreteSimulationOfDormitory
 		public int TimeInMusicRoom { get; private set; } = 3600;
 		public int TimeInStudyRoom { get; private set; } = 5400;
 		public int TimeInWashingMachinesRoom { get; private set; } = 1800;
-		public int TimeOut { get; private set; } = 3600;
-		public int TimeInRoom { get; private set; } = 3600;
+		public int TimeOut { get; private set; } = 8 * 3600;
+		public int TimeInRoom { get; private set; } = 5 * 3600;
 		public int CurrentFloor;
-		public int TimeBetweenEvents { get; private set; } = 8 * 3600;
-		public Place CurrentPlace;
+		public int TimeBetweenEvents { get; private set; } = 24 * 3600;
+		public Place CurrentPlace { get; set; }
 		public enum Place
 		{
 			Outside,
 			InRoom,
-			WaitingForElevator,
+			Waiting,
 			InElevator,
 			InGym,
 			InMusicRoom,
 			InStudyRoom,
-			InWashingMachineRoom,
-			WaitingInQueue
+			InWashingMachineRoom
 		}
 		public Student(Dormitory dorm)
 		{
 			HomeFloor = random.Next(1, dorm.NumberOfFloors);
 			Number = currentNumber++;
 			int rand = random.Next(0, 100);
-            if (rand > 50)
+            if (rand > 30)
             {
 				CurrentPlace = Place.InRoom;
             }
 			else
             {
-				CurrentPlace = Place.InRoom;
+				CurrentPlace = Place.Outside;
             }
-			pozadavek = WhatHeWants.GymKeys;
+			Request = RandomRequest();
 		}
-		public Place GetCurrentPlace()
-		{
-			return CurrentPlace;
-		}
-		public Place nextPlace;
-		public void NextPlace()
-		{
-			CurrentPlace = nextPlace;
-		}
-
-		public WhatHeWants pozadavek;
+		public WhatHeWants Request { get; set; }
 		public enum WhatHeWants
 		{
 			GymKeys,
@@ -75,11 +64,10 @@ namespace DiscreteSimulationOfDormitory
 				return true;
 			}
 			return false;
-			
         }
 		public WhatHeWants RandomRequest()
         {
-			int randomness = random.Next(0, 5);
+			int randomness = random.Next(0, 6);
 			WhatHeWants request = WhatHeWants.Nothing;
 			switch (randomness)
 			{
@@ -97,6 +85,9 @@ namespace DiscreteSimulationOfDormitory
 					break;
 				case 4:
 					request = Student.WhatHeWants.WashingMachineKeys;
+					break;
+				case 5:
+					request = Student.WhatHeWants.Nothing;
 					break;
 				default:
 					break;

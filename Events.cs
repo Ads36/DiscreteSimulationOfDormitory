@@ -48,13 +48,27 @@ namespace DiscreteSimulationOfDormitory
 			el.MoveUp();
 			if (el.FloorsToStop.Count > 0)
 			{
-				if (el.CurrentFloor < el.FloorsToStop.Max && el.CurrentState == Elevator.State.Up && !el.IsFull())
+				if (el.CurrentFloor < el.FloorsToStop.Max && el.CurrentState == Elevator.State.Up)
 				{
+					int pocet = dorm.calendar.calendar.Count;
 					dorm.ScheduleEvent(new ElevatorMovingUp(Time + el.SpeedBetweenFloors, el, el.Number));
+					int i = 1;
+					while (pocet == dorm.calendar.calendar.Count)
+                    {
+						dorm.ScheduleEvent(new ElevatorMovingUp(Time + el.SpeedBetweenFloors + i, el, el.Number));
+						i++;
+					}
 				}
 				else
 				{
+					int pocet = dorm.calendar.calendar.Count;
 					dorm.ScheduleEvent(new ElevatorMovingDown(Time + el.SpeedBetweenFloors, el, el.Number));
+					int i = 1;
+					while (pocet == dorm.calendar.calendar.Count)
+                    {
+						dorm.ScheduleEvent(new ElevatorMovingDown(Time + el.SpeedBetweenFloors + i, el, el.Number));
+						i++;
+					}
 				}
 			}
 			else
@@ -84,11 +98,25 @@ namespace DiscreteSimulationOfDormitory
 			{
 				if (el.CurrentFloor > el.FloorsToStop.Min && el.CurrentState == Elevator.State.Down)
 				{
+					int number = dorm.calendar.calendar.Count;
 					dorm.ScheduleEvent(new ElevatorMovingDown(Time + el.SpeedBetweenFloors, el, el.Number));
+					int i = 1;
+					while (number == dorm.calendar.calendar.Count)
+					{
+						dorm.ScheduleEvent(new ElevatorMovingDown(Time + el.SpeedBetweenFloors + i, el, el.Number));
+						i++;
+					}
 				}
 				else
 				{
+					int number = dorm.calendar.calendar.Count;
 					dorm.ScheduleEvent(new ElevatorMovingUp(Time + el.SpeedBetweenFloors, el, el.Number));
+					int i = 1;
+					while (number == dorm.calendar.calendar.Count)
+					{
+						dorm.ScheduleEvent(new ElevatorMovingUp(Time + el.SpeedBetweenFloors + i, el, el.Number));
+						i++;
+					}
 				}
 			}
 			else
@@ -105,20 +133,16 @@ namespace DiscreteSimulationOfDormitory
 		{
 			el = elev;
 		}
-		protected override int PrimaryPriority => 6;
+		protected override int PrimaryPriority => 20;
 		protected override void Action(Dormitory dorm)
 		{
-            if (el.CurrentFloor < el.FloorsToStop.Max && el.CurrentState == Elevator.State.Stop)
+            if ((el.CurrentFloor < el.FloorsToStop.Max) && (el.CurrentState == Elevator.State.Stop))
             {
 				dorm.ScheduleEvent(new ElevatorMovingUp(Time+1, el, el.Number));
 			}
-            else if (el.CurrentFloor > el.FloorsToStop.Min && el.CurrentState == Elevator.State.Stop)
+            else if ((el.CurrentFloor > el.FloorsToStop.Min) && (el.CurrentState == Elevator.State.Stop))
             {
 				dorm.ScheduleEvent(new ElevatorMovingDown(Time+1, el, el.Number));
-            }
-			else
-            {
-				//dorm.ScheduleEvent(new ElevatorMovingUp(Time + 1, el, el.Number));
             }
 		}
 	}
@@ -259,7 +283,6 @@ namespace DiscreteSimulationOfDormitory
 		protected new abstract int SecondaryPriority { get;}
 		public BorrowingAndReturningThings(int time, Student who, int priority = 1) : base(time)
         {
-			//SecondaryPriority = priority;
 			student = who;
 		}
 		public int CompareTo(BorrowingAndReturningThings other)
@@ -277,7 +300,6 @@ namespace DiscreteSimulationOfDormitory
 			return PrimaryPriority.CompareTo(other.PrimaryPriority);
 		}
 		protected override int PrimaryPriority => 1;
-		
     }
 	class BorrowingGymKeys : BorrowingAndReturningThings
     {
