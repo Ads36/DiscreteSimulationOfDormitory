@@ -251,30 +251,10 @@ namespace DiscreteSimulationOfDormitory
             }
 		}
 	}
-	class PressingButtonOfElevator : Event
-    {
-		private Elevator el;
-		public PressingButtonOfElevator(int time, Elevator elev, int secondaryPriority) : base(time)
-		{
-			el = elev;
-		}
-		protected override int PrimaryPriority => 20;
-		protected override void Action(Dormitory dorm)
-		{
-            if ((el.CurrentFloor < el.FloorsToStop.Max) && (el.CurrentState == Elevator.State.Stop))
-            {
-				dorm.ScheduleEvent(new ElevatorMovingUp(Time+1, el, el.Number));
-			}
-            else if ((el.CurrentFloor > el.FloorsToStop.Min) && (el.CurrentState == Elevator.State.Stop))
-            {
-				dorm.ScheduleEvent(new ElevatorMovingDown(Time+1, el, el.Number));
-            }
-		}
-	}
 	public abstract class BorrowingAndReturningThings : Event
     {
 		private Student student;
-		//jsut list of all things that could be borrowed
+		//just a list of all things that could be borrowed
 		protected enum ThingsToBorrow
         {
 			GymKeys,
