@@ -209,7 +209,7 @@ namespace DiscreteSimulationOfDormitory
             CurrentGatekeeperIndex = (CurrentGatekeeperIndex + 1) % GatekeeperNames.Count;
             Console.WriteLine($"<{ConvertToTime(time)}> Changing porters: {GatekeeperNames[oldPorterIndex]} for {GetCurrentGatekeeperName()}");
         }
-        public string GetCurrentGatekeeperName()
+        private string GetCurrentGatekeeperName()
         {
             return GatekeeperNames[CurrentGatekeeperIndex];
         }
