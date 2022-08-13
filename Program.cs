@@ -5,7 +5,6 @@
 
 using System;
 using System.Collections.Generic;
-using CodEx;
 using System.IO;
 namespace DiscreteSimulationOfDormitory
 {
