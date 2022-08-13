@@ -20,31 +20,43 @@ Program
 Program is divided into 5 major classes:
 
 Class Dormitory
-Class that holds all together. It has instances of students, elevators, and calendar.
+Class that holds everything together. It has instances of students, elevators, and calendar.
+Methods:
+Initialize, InitializeStudents, InitializeElevators – creates data structures, instances and schedules some events
+All methods below are called when an event happens
+StudentWantsSomethingFromGatekeeper – schedules events according to student current place
+ArrivingToFirstFloor – student either joins queue or goes outside
+EnteringDormitory, LeavingDormitory – called when student enters or leaves dormitory, schedules either EnteringDormitory or AddToQueue or sends student to his room
+Open – opens dormitory
+ChangeGatekeepers – changes gatekeepers
+BorrowingThings and ReturningThings – 8 method, one of them called (borrow) after student leaves queue and another (return) called after he finishes an action
+AddToGatekeeperQueue – enqueues student to gatekeeper queue
+RemoveFromQueue – dequeues student from gatekeeper queue and also schedules event (BorrowingThings or ReturningThings) according to student's request
+AddToElevatorQueue – adds student to queue and also starts an elevator if it is not moving
 
 Class Calendar
 Class which is responsible for scheduling and invoking events.
 Methods:
-ScheduleEvent schedules add event to SortedSet.
-Run invokes all events in a while loop.
+ScheduleEvent – schedules add event to SortedSet.
+Run – invokes all events in a while loop.
 
 Class Elevator
 This class provides everything about elevators. 
 Methods:
-MoveDown and MoveUp moves elevator in corresponding direction.
-Stop stops the elevator.
-GetOnElevator adds student to the elevator. Also checks patience (student can't withstand many full elevators in his direction of travel) 
+MoveDown, MoveUp – moves elevator in corresponding direction.
+Stop – stops the elevator.
+GetOnElevator – adds student to the elevator. Also checks patience (student can't withstand many full elevators in his direction of travel) 
 of other students in queue.
-GetOffElevator removes student from the elevator and assigns new request for him.
-GettingOfElevator removes all students on demanded floor (calls GetOffElevator for each of them).
+GetOffElevator – removes student from the elevator and assigns new request for him.
+GettingOfElevator – removes all students on demanded floor (calls GetOffElevator for each of them).
 IsFull checks capacity.
-DoesSomeoneGetOff returns true if there is someone who wants to get off at current floor.
-GetNewPassanger checks if there are any students in queue in current floor, if yes, they GetOnElevator.
+DoesSomeoneGetOff – returns true if there is someone who wants to get off at current floor.
+GetNewPassanger – checks if there are any students in queue in current floor, if yes, they GetOnElevator.
 
 Abstract class Event
 Each derived class must implement Action and have unique PrimaryPriority. Instances are compared to each other, so Event implements IComparable.
 There is also static int Time – each event happens at a specific time.
-Most events call 1 method of Dormitory instance, which is responsible for all things happening in simulation.
+Most events call 1 method of Dormitory instance, which is responsible for all things happening in simulation. Events have the same name as Dormitory methods, which are described above.
 Derived classes:
 OpeningDorms
 ChangingGatekeepers
@@ -53,18 +65,15 @@ AddToElevatorQueue
 NextWaiterInQueue
 StudentWantsSomething
 ArrivingToFirstFloorByFoot
-EnteringDormitory: called when student enters dormitory
-LeavingDormitory: called when student is leaving dormitory
-ElevatorMovingUp
-ElevatorMovingDown
-PressingButtonOfElevator
-BorrowingAndReturningThings (and classes derived from this class): all things (keys) student can borrow and than return have 2 classes derived
+EnteringDormitory – called when student enters dormitory
+LeavingDormitory – called when student is leaving dormitory
+ElevatorMovingUp – called when elevator can move up (there is a floor to stop in a floor above current elevator floor)
+ElevatorMovingDown – same as ElevatorMovingUp, but in the opposite direction
+BorrowingAndReturningThings (and classes derived from this class) – all things (keys) student can borrow and than return have 2 classes derived
 from this class, each is called when that event happens
-
 
 Class Student
 This class holds information about a student.
-
 
 Alternate program solutions
 More in possible extensions.
@@ -102,7 +111,6 @@ Almost all output data are in this format: <{time}> Student {student number} ...
 Time is in format dd:hh:mm:ss, where d are days, h are hours, m are minutes and s are seconds. Time begins at 0, all events have time relative to the start of simulation.
 Each student has unique number, so identification is easy. Some other things includes elevators, each of them also has unique number.
 Some output data are in format <{time}> Changing porters ..., this happens when porters need to change duties every 8 hours.
-
 
 Possible extensions
 Other events could be added, for example borrowing vacuum cleaners, selling baguettes and pouring water from Filtermac.
