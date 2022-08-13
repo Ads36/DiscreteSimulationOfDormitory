@@ -20,7 +20,7 @@ Priority queue for event calendar (SortedSet from System.Collections.Generic), l
 Program is divided into 5 major classes:
 
 ### Class Dormitory
-Class that holds everything together. It has instances of students, elevators, and calendar.
+Class that holds everything together. It has instances of students, elevators, and calendar.  
 Methods:  
 Initialize, InitializeStudents, InitializeElevators – creates data structures, instances and schedules some events
 All methods below are called when an event happens  
@@ -35,13 +35,13 @@ RemoveFromQueue – dequeues student from gatekeeper queue and also schedules ev
 AddToElevatorQueue – adds student to queue and also starts an elevator if it is not moving
 
 ### Class Calendar
-Class which is responsible for scheduling and invoking events.
+Class which is responsible for scheduling and invoking events.  
 Methods:  
 ScheduleEvent – schedules add event to SortedSet.  
 Run – invokes all events in a while loop.  
 
 ### Class Elevator
-This class provides everything about elevators. 
+This class provides everything about elevators.   
 Methods:  
 MoveDown, MoveUp – moves elevator in corresponding direction.  
 Stop – stops the elevator.  
@@ -56,7 +56,7 @@ GetNewPassanger – checks if there are any students in queue in current floor, 
 ### Abstract class Event
 Each derived class must implement Action and have unique PrimaryPriority. Instances are compared to each other, so Event implements IComparable.
 There is also static int Time – each event happens at a specific time.
-Most events call 1 method of Dormitory instance, which is responsible for all things happening in simulation. Events have the same name as Dormitory methods, which are described above.
+Most events call 1 method of Dormitory instance, which is responsible for all things happening in simulation. Events have the same name as Dormitory methods, which are described above.  
 Derived classes:  
 OpeningDorms  
 ChangingGatekeepers  
