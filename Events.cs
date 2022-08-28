@@ -124,6 +124,10 @@ namespace DiscreteSimulationOfDormitory
 			{
 				dorm.ArrivingToFirstFloor(student, Time);
 			}
+			else
+            {
+				dorm.AddToElevatorQueue(student, student.HomeFloor, 0, dorm.RandomElevator(), Time);
+            }
 		}
 	}
 	class EnteringDormitory : Event
