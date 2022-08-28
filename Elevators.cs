@@ -88,9 +88,9 @@ namespace DiscreteSimulationOfDormitory
         {
             CurrentState = State.Stop;
         }
-        private void GetOnElevator(int time, Dormitory dorm)
+        private void GetOnElevator(int time, Dormitory dorm, int studentOrder)
         {
-            Transfer stud = ElevatorQueues[CurrentFloor][0];
+            Transfer stud = ElevatorQueues[CurrentFloor][studentOrder];
             //can't enter elevator, because it is full
             if (StudentsIn.Count == Capacity)
             {
@@ -108,7 +108,7 @@ namespace DiscreteSimulationOfDormitory
             }
             else
             {
-                ElevatorQueues[CurrentFloor].RemoveAt(0);
+                ElevatorQueues[CurrentFloor].RemoveAt(studentOrder);
                 Console.WriteLine($"<{dorm.ConvertToTime(time)}> Student {stud.ReturnStudent().Number} is entering elevator {Number} at floor {CurrentFloor} and heading to floor {stud.DestinationFloor}");
                 StudentsIn.Add(stud);
                 stud.TransferredStudent.CurrentPlace = Student.Place.InElevator;
@@ -190,11 +190,13 @@ namespace DiscreteSimulationOfDormitory
                 //only students in queue can get on elevator
                 for (int i = 0; i < ElevatorQueues[CurrentFloor].Count; i++)
                 {
+                    /*
                     if (StudentsIn.Count == Capacity)
                     {
                         break;
                     }
-                    GetOnElevator(time, dorm);
+                    */
+                    GetOnElevator(time, dorm, i);
                 }
             }
             //no one else is waiting in queue, so this floor could be removed from stops
