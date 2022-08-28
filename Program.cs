@@ -120,7 +120,7 @@ namespace DiscreteSimulationOfDormitory
                 }
             }
         }
-        private Elevator RandomElevator()
+        public Elevator RandomElevator()
         {
             int whichElevator = random.Next(0, NumberOfElevators);
             return Elevators[whichElevator];
